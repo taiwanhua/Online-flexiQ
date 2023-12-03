@@ -1,0 +1,170 @@
+body {
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+}
+
+hr {
+  width: 500px;
+}
+
+#board {
+  width: 400px;
+  height: 400px;
+
+  background-color: #bbada0;
+  border: 6px solid #bbada0;
+
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.tile {
+  width: 90px;
+  height: 90px;
+  margin: 5px;
+  background-color: #cdc1b5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.around {
+  background-color: #c2fbdb;
+}
+
+.blackPiece {
+  width: 70px;
+  height: 70px;
+  background-color: black;
+  border-radius: 50%;
+}
+
+.whitePiece {
+  width: 70px;
+  height: 70px;
+  background-color: white;
+  border-radius: 50%;
+}
+
+.select {
+  box-shadow: 0px 0px 10px;
+}
+
+#checkWinner {
+  display: none;
+}
+
+.btn {
+  border: 3px solid black;
+  width: 120px;
+  padding: 10px 0px;
+  font-size: 20px;
+  margin: 2rem;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #c2fbdb;
+}
+
+.rule {
+  width: 500px;
+  margin: auto;
+  padding: 50px 0;
+}
+
+.rule p {
+  font-size: 18px;
+}
+
+/* media queries (small devices) */
+
+@media screen and (max-width: 600px) {
+  hr {
+    width: 300px;
+  }
+
+  #board {
+    width: 320px;
+    height: 320px;
+  }
+
+  .tile {
+    width: 70px;
+    height: 70px;
+    margin: 5px;
+  }
+
+  .blackPiece {
+    width: 50px;
+    height: 50px;
+  }
+
+  .whitePiece {
+    width: 50px;
+    height: 50px;
+  }
+
+  .rule {
+    width: 320px;
+    padding: 50px 0;
+  }
+
+  .btn {
+    margin: 1rem;
+  }
+}
+
+/* new code */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.rooms_bar {
+  flex-basis: 20%;
+  background-color: antiquewhite;
+  z-index: 1;
+  box-shadow: 5px 0px 15px 5px rgba(0, 0, 0, 0.3);
+}
+
+.checker_board {
+  flex-basis: 80%;
+  background-color: cadetblue;
+}
+
+.create_room_btn {
+  display: block;
+  color: antiquewhite;
+  background-color: black;
+  padding: 12px 18px;
+  border-radius: 10px;
+  margin: 20px auto;
+  cursor: pointer;
+}
+
+.room {
+  background-color: rgb(177 125 125);
+  border: 1px solid black;
+}
+
+.room_btn {
+  font-size: 22px;
+  display: block;
+  width: 100%;
+  padding: 20px 0px 20px 20px;
+  text-align: left;
+  background-color: inherit;
+  border: 0;
+  cursor: pointer;
+}

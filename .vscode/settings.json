@@ -1,0 +1,25 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "prettier.trailingComma": "all",
+  "cSpell.userWords": [
+    "wowgo",
+    "nextjs",
+    "codegen",
+    "uuidv4",
+    "zustand",
+    "immer",
+    "deepmerge",
+    "nextauth",
+    "NEXTAUTH_URL",
+    "NEXTAUTH_JWT_EXPIRE_TIME",
+    "NEXTAUTH_SECRET"
+  ]
+  // https://github.com/microsoft/vscode-eslint/issues/1620
+  // "eslint.experimental.useFlatConfig": false,
+  // https://github.com/microsoft/vscode-eslint/issues/1377
+  // "eslint.workingDirectories": [
+  //   { "pattern": "./apps/*" },
+  //   { "pattern": "./packages/*" }
+  // ]
+}
