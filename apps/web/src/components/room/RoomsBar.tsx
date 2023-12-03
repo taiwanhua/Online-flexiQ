@@ -1,14 +1,21 @@
 import { useState } from "react";
-import RoomLists from "./RoomLists";
+import { RoomList } from "./roomList/RoomList";
+import { Room } from "@repo/core/types/room";
+import { board } from "@/constant/board";
 
-const roomList = [
+const roomListData: Room[] = [
   {
-    roomId: "Jush's room",
+    id: "Jush's room",
+    name: "Jush's room",
+    player1: null,
+    player2: null,
+    current: board,
+    lastPlayer: null,
   },
 ];
 
 function RoomsBar() {
-  const [roomLists, setRoomLists] = useState(roomList);
+  const [roomList, setRoomList] = useState<Room[]>(roomListData);
 
   const createRoom = () => {
     const newRoomId = prompt("請輸入房間名稱:");
@@ -19,7 +26,17 @@ function RoomsBar() {
         alert("房名不能為空!");
         return;
       default:
-        setRoomLists((prev) => [...prev, { roomId: newRoomId }]);
+        setRoomList((prev) => [
+          ...prev,
+          {
+            id: newRoomId,
+            name: newRoomId,
+            player1: null,
+            player2: null,
+            current: board,
+            lastPlayer: null,
+          },
+        ]);
         console.log("new room created!");
     }
     // if (newRoomId === null) return;
@@ -30,7 +47,7 @@ function RoomsBar() {
       <button onClick={createRoom} className="create_room_btn">
         Create Room
       </button>
-      <RoomLists roomLists={roomLists} />
+      <RoomList roomList={roomList} />
     </div>
   );
 }

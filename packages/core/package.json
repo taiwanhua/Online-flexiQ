@@ -1,0 +1,19 @@
+{
+  "name": "@repo/core",
+  "version": "0.0.0",
+  "license": "MIT",
+  "exports": {
+    "./room": "./types/room.ts",
+    "./copy": "./types/copy.ts",
+    "./setup-counter": "./utils/counter.ts"
+  },
+  "scripts": {
+    "lint": "eslint \"**/*.ts\""
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2"
+  }
+}

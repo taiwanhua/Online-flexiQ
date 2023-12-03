@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import Rule from "@/components/rule/Rule";
+import { board } from "@/constant/board";
 
 export default function Checkerboard(): JSX.Element {
   //Public API that will echo messages sent to it back to the client
@@ -29,12 +30,7 @@ export default function Checkerboard(): JSX.Element {
       JSON.stringify({
         type: "create",
         playerId: "playerId",
-        current: [
-          ["", "", "", ""],
-          ["", "", "", ""],
-          ["", "", "", ""],
-          ["", "", "", ""],
-        ],
+        current: board,
         playerName: "playerName",
         roomId: "roomId",
         roomName: "roomName",

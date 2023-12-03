@@ -6,25 +6,7 @@ import {
   ExtWebSocket,
   pingInterval,
 } from "./connections/pingInterval.js";
-
-interface Player {
-  id: string;
-  name: string;
-}
-
-type Row = [string, string, string, string];
-
-type Board = [Row, Row, Row, Row];
-
-interface Room {
-  id: string;
-  name: string;
-  player1: Player | null;
-  player2: Player | null;
-  // history: []; // if need regret chess
-  current: Board;
-  lastPlayer: Player | null;
-}
+import { Board, Room } from "@repo/core/room";
 
 const room: Room[] = [];
 
