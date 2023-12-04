@@ -1,19 +1,22 @@
+import { memo } from "react";
 import type { FC } from "react";
 
 export interface RoomItemProps {
-  roomId: string;
+  roomName: string;
 }
 
-export const RoomItem: FC<RoomItemProps> = ({ roomId }) => {
+export const RoomItem: FC<RoomItemProps> = ({ roomName }) => {
   const connectRoom = () => {
     console.log("Connect Room!");
   };
 
   return (
     <li className="room">
-      <button onClick={connectRoom} className="room_btn">
-        {roomId}
+      <button className="room_btn" onClick={connectRoom} type="button">
+        {roomName}
       </button>
     </li>
   );
 };
+
+export default memo(RoomItem);

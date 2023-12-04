@@ -1,42 +1,46 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import Rule from "@/components/rule/Rule";
 import { board } from "@/constant/board";
 
-export default function Checkerboard(): JSX.Element {
+function Checkerboard(): JSX.Element {
   //Public API that will echo messages sent to it back to the client
-  const [socketUrl, setSocketUrl] = useState("ws://localhost:8888");
+  const [socketUrl, setSocketUrl] = useState("ws://localhost:8888?");
   const [messageHistory, setMessageHistory] = useState([]);
 
-  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
-    onOpen: () => console.log("opened"),
-  });
+  const { sendJsonMessage, readyState, lastJsonMessage } = useWebSocket(
+    socketUrl,
+    {
+      onOpen: (event) => console.log("opened", event),
+    },
+  );
 
   useEffect(() => {
-    if (lastMessage !== null) {
-      setMessageHistory((prev) => prev.concat(lastMessage));
+    if (lastJsonMessage !== null) {
+      setMessageHistory((prev) => prev.concat(lastJsonMessage));
     }
-  }, [lastMessage, setMessageHistory]);
+  }, [lastJsonMessage]);
 
   const handleClickChangeSocketUrl = useCallback(
-    () => setSocketUrl("ws://localhost:8888"),
+    () => setSocketUrl("ws://localhost:8888?ss=1"),
     [],
   );
 
-  const handleClickSendMessage = useCallback(() => sendMessage("Hello"), []);
+  const handleClickSendMessage = useCallback(
+    () => sendJsonMessage("Hello"),
+    [],
+  );
 
   const handleClickSendCreate = useCallback(() => {
-    sendMessage(
-      JSON.stringify({
-        type: "create",
-        playerId: "playerId",
-        current: board,
-        playerName: "playerName",
-        roomId: "roomId",
-        roomName: "roomName",
-      }),
-    );
-  }, []);
+    sendJsonMessage({
+      type: "create",
+      playerId: "playerId",
+      current: board,
+      playerName: "playerName",
+      roomId: "roomId",
+      roomName: "roomName",
+    });
+  }, [sendJsonMessage]);
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: "Connecting",
@@ -82,10 +86,12 @@ export default function Checkerboard(): JSX.Element {
           Click create
         </button>
         <span>The WebSocket is currently {connectionStatus}</span>
-        {lastMessage ? <span>Last message: {lastMessage.data}</span> : null}
+        {lastJsonMessage ? (
+          <span>Last message: {JSON.stringify(lastJsonMessage)}</span>
+        ) : null}
         <ul>
           {messageHistory.map((message, idx) => (
-            <span key={idx}>{message ? message.data : null}</span>
+            <span key={idx}>{message ? JSON.stringify(message) : null}</span>
           ))}
         </ul>
         {readyState}
@@ -94,3 +100,5 @@ export default function Checkerboard(): JSX.Element {
     </div>
   );
 }
+
+export default memo(Checkerboard);

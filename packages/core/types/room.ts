@@ -1,6 +1,8 @@
 export interface Player {
   id: string;
   name: string;
+  roomId: string | null;
+  roomName: string | null;
 }
 
 export type Row = [string, string, string, string];
@@ -15,4 +17,25 @@ export interface Room {
   // history: []; // if need regret chess
   current: Board;
   lastPlayer: Player | null;
+}
+
+export interface RoomsWithConnectPlayerRoom {
+  rooms: Room[];
+  player: Player;
+  room: Room | null;
+}
+
+export interface ClientMessage {
+  type:
+    | "joinRoom"
+    | "createRoom"
+    | "leaveRoom"
+    | "startGame"
+    | "restartGame"
+    | "go";
+  roomId: string | null;
+  roomName: string;
+  playerId: string;
+  playerName: string;
+  current: Board;
 }

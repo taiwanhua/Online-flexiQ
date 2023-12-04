@@ -4,7 +4,6 @@
   "license": "MIT",
   "exports": {
     "./room": "./types/room.ts",
-    "./copy": "./types/copy.ts",
     "./setup-counter": "./utils/counter.ts"
   },
   "scripts": {

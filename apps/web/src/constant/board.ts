@@ -1,4 +1,4 @@
-import { Board } from "@repo/core/types/room";
+import { Board } from "@repo/core/room";
 
 export const board: Board = [
   ["", "", "", ""],

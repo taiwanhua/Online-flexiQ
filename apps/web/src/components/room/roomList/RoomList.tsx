@@ -1,6 +1,6 @@
-import type { FC } from "react";
+import { memo, type FC } from "react";
 import { RoomItem } from "./RoomItem";
-import { Room } from "@repo/core/types/room";
+import { Room } from "@repo/core/room";
 
 export interface RoomListProps {
   roomList: Room[];
@@ -10,10 +10,12 @@ export const RoomList: FC<RoomListProps> = ({ roomList }) => {
   return (
     <nav>
       <ul>
-        {roomList.map(({ id }) => (
-          <RoomItem key={id} roomId={id} />
+        {roomList.map(({ id, name }) => (
+          <RoomItem key={id} roomName={name} />
         ))}
       </ul>
     </nav>
   );
 };
+
+export default memo(RoomList);

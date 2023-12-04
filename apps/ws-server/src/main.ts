@@ -1,4 +1,5 @@
 import { createServer } from "http";
+import { parse } from "url";
 // import { readFileSync } from "fs";
 import { WebSocketServer } from "ws";
 import {
@@ -6,18 +7,14 @@ import {
   ExtWebSocket,
   pingInterval,
 } from "./connections/pingInterval.js";
-import { Board, Room } from "@repo/core/room";
+import {
+  ClientMessage,
+  Room,
+  RoomsWithConnectPlayerRoom,
+} from "@repo/core/room";
+import { v4 as uuidv4 } from "uuid";
 
-const room: Room[] = [];
-
-interface Received {
-  type: "join" | "create" | "leave" | "start" | "restart" | "go";
-  roomId: string;
-  roomName: string;
-  playerId: string;
-  playerName: string;
-  current: Board;
-}
+const rooms: Room[] = [];
 
 const server = createServer({
   // cert: readFileSync("/path/to/cert.pem"),
@@ -25,18 +22,25 @@ const server = createServer({
 });
 const wss = new WebSocketServer({ server });
 
-wss.on("connection", function connection(webSocket) {
+wss.on("connection", function connection(webSocket, req) {
+  const { query } = parse(req.url ?? "", true);
+
+  console.log(query);
   const ws = webSocket as ExtWebSocket;
   ws.isAlive = true;
+  const clientID = uuidv4();
+  ws.clientID = clientID;
 
   ws.on("error", console.error);
 
   ws.on("pong", heartbeat);
 
   ws.on("message", function message(data) {
-    let received: Received | null = null;
+    let received: ClientMessage | null = null;
     try {
-      received = JSON.parse(data as unknown as string) as unknown as Received;
+      received = JSON.parse(
+        data as unknown as string,
+      ) as unknown as ClientMessage;
     } catch (error) {
       console.log(error);
     }
@@ -44,40 +48,66 @@ wss.on("connection", function connection(webSocket) {
       return;
     }
 
+    console.log("received: %s", received);
+
     const { type, playerId, current, playerName, roomId, roomName } = received;
 
     switch (type) {
-      case "create": {
-        const player = { id: playerId, name: playerName };
+      case "createRoom": {
+        const newRoomId = uuidv4();
+        const player = {
+          id: playerId,
+          name: playerName,
+          roomId: newRoomId,
+          roomName,
+        };
 
-        room.push({
-          id: roomId,
+        const createRoom = {
+          id: newRoomId,
           name: roomName,
           player1: player,
           player2: null,
           current,
           lastPlayer: player,
-        });
+        };
+
+        rooms.push(createRoom);
+
+        const createRoomData: RoomsWithConnectPlayerRoom = {
+          player,
+          room: createRoom,
+          rooms,
+        };
+
+        ws.send(JSON.stringify(createRoomData));
         break;
       }
-      case "join":
+      case "joinRoom":
         break;
-      case "leave":
+      case "leaveRoom":
         break;
-      case "restart":
+      case "restartGame":
         break;
-      case "start":
+      case "startGame":
         break;
 
       default:
         break;
     }
-
-    console.log("received: %s", data);
-    ws.send(JSON.stringify({ room }));
   });
 
-  ws.send(JSON.stringify({ room }));
+  const initConnectData: RoomsWithConnectPlayerRoom = {
+    player: {
+      id: clientID,
+      name: "name" + clientID,
+      roomId: null,
+      roomName: null,
+    },
+    room: null,
+    rooms,
+  };
+
+  ws.send(JSON.stringify(initConnectData));
 });
 
 // to detect and close broken connections

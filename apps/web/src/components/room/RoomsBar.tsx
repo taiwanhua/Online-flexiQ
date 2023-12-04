@@ -1,55 +1,52 @@
-import { useState } from "react";
+import { memo } from "react";
 import { RoomList } from "./roomList/RoomList";
-import { Room } from "@repo/core/types/room";
 import { board } from "@/constant/board";
-
-const roomListData: Room[] = [
-  {
-    id: "Jush's room",
-    name: "Jush's room",
-    player1: null,
-    player2: null,
-    current: board,
-    lastPlayer: null,
-  },
-];
+import { useConnectStore } from "@/zustand/useConnectStore";
+import { ClientMessage } from "@repo/core/room";
 
 function RoomsBar() {
-  const [roomList, setRoomList] = useState<Room[]>(roomListData);
+  const { sendJsonMessage, connectStore } = useConnectStore();
 
   const createRoom = () => {
-    const newRoomId = prompt("請輸入房間名稱:");
-    switch (newRoomId) {
+    if (!connectStore) {
+      return;
+    }
+
+    const newRoomName = prompt("請輸入房間名稱:");
+
+    switch (newRoomName) {
       case null:
         return;
       case "":
         alert("房名不能為空!");
         return;
       default:
-        setRoomList((prev) => [
-          ...prev,
-          {
-            id: newRoomId,
-            name: newRoomId,
-            player1: null,
-            player2: null,
-            current: board,
-            lastPlayer: null,
-          },
-        ]);
-        console.log("new room created!");
+        sendJsonMessage<ClientMessage>({
+          type: "createRoom",
+          roomId: null,
+          roomName: newRoomName,
+          playerId: connectStore.player.id,
+          playerName: connectStore.player.name,
+          current: board,
+        });
+      // console.log("new room created!");
     }
     // if (newRoomId === null) return;
   };
 
   return (
     <div className="rooms_bar">
-      <button onClick={createRoom} className="create_room_btn">
+      <button
+        className="create_room_btn"
+        disabled={Boolean(connectStore?.room)} // TODO: disabled 樣式沒做
+        onClick={createRoom}
+        type="button"
+      >
         Create Room
       </button>
-      <RoomList roomList={roomList} />
+      <RoomList roomList={connectStore?.rooms ?? []} />
     </div>
   );
 }
 
-export default RoomsBar;
+export default memo(RoomsBar);

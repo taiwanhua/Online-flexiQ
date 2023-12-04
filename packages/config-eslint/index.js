@@ -6,6 +6,7 @@ module.exports = {
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    require.resolve("@vercel/style-guide/eslint/react"),
     "prettier",
   ],
   plugins: ["@typescript-eslint"],
@@ -15,5 +16,6 @@ module.exports = {
   },
   rules: {
     "@typescript-eslint/no-non-null-assertion": "off",
+    "react/function-component-definition": "off",
   },
 };
