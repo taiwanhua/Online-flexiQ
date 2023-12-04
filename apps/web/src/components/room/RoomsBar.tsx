@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { RoomList } from "./roomList/RoomList";
 import { board } from "@/constant/board";
 import { useConnectStore } from "@/zustand/useConnectStore";
@@ -7,7 +7,7 @@ import { ClientMessage } from "@repo/core/room";
 function RoomsBar() {
   const { sendJsonMessage, connectStore } = useConnectStore();
 
-  const createRoom = () => {
+  const createRoom = useCallback(() => {
     if (!connectStore) {
       return;
     }
@@ -32,17 +32,44 @@ function RoomsBar() {
       // console.log("new room created!");
     }
     // if (newRoomId === null) return;
-  };
+  }, [connectStore, sendJsonMessage]);
+
+  const leaveRoom = useCallback(() => {
+    if (!connectStore) {
+      return;
+    }
+
+    if (!connectStore.room) {
+      return;
+    }
+
+    const { id: playerId, name: playerName } = connectStore.player;
+    const { name: roomName, id: roomId, current } = connectStore.room;
+
+    sendJsonMessage<ClientMessage>({
+      type: "leaveRoom",
+      roomId: roomId,
+      roomName,
+      playerId: playerId,
+      playerName: playerName,
+      current,
+    });
+  }, [connectStore, sendJsonMessage]);
+
+  const isHaveRoom = useMemo(
+    () => Boolean(connectStore?.room),
+    [connectStore?.room],
+  );
 
   return (
     <div className="rooms_bar">
       <button
         className="create_room_btn"
-        disabled={Boolean(connectStore?.room)} // TODO: disabled 樣式沒做
-        onClick={createRoom}
+        disabled={isHaveRoom}
+        onClick={isHaveRoom ? leaveRoom : createRoom}
         type="button"
       >
-        Create Room
+        {isHaveRoom ? "Leave Room" : "Create Room"}
       </button>
       <RoomList roomList={connectStore?.rooms ?? []} />
     </div>
