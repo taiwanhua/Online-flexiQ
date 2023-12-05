@@ -1,4 +1,4 @@
-import {memo}from "react"
+import { memo } from "react";
 import Checkerboard from "@/components/checkerboard/Checkerboard";
 import RoomsBar from "@/components/room/RoomsBar";
 import { useConnect } from "@/hooks/useConnect";

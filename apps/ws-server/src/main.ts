@@ -13,7 +13,7 @@ import {
   RoomsWithConnectPlayerRoom,
 } from "@repo/core/room";
 import { v4 as uuidv4 } from "uuid";
-
+const port = 8888;
 const rooms: Room[] = [];
 
 const server = createServer({
@@ -118,4 +118,6 @@ wss.on("close", function close() {
   clearInterval(interval);
 });
 
-server.listen(8888);
+server.listen(port, () => {
+  console.log(`WebSocket server listening on port ${port}`);
+});

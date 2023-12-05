@@ -44,8 +44,8 @@ export const useConnectStore = create<Store>((set) => ({
     set((store) => ({ ...store, setSendJsonMessage: emptyFunction })),
 
   setConnectStore: (connectStore): void =>
-    set(() => {
-      return { connectStore };
+    set((store) => {
+      return { ...store, connectStore };
     }),
   clearConnectStore: (): void =>
     set((store) => ({ ...store, connectStore: null })),

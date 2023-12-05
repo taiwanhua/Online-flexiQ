@@ -48,8 +48,8 @@ export function useConnect({ url }: Param): Return {
   useEffect(() => {
     if (connectionStatus === "Open") {
       setSendJsonMessage(sendJsonMessage);
-      setConnectionStatus(connectionStatus);
     }
+    setConnectionStatus(connectionStatus);
   }, [
     connectionStatus,
     sendJsonMessage,
