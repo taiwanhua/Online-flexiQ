@@ -21,7 +21,7 @@ export const pingInterval = (
       ws.isAlive = false;
       ws.ping();
     });
-  }, 30000);
+  }, 3000);
 
 export function heartbeat(this: WebSocket) {
   (this as ExtWebSocket).isAlive = true;

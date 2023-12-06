@@ -23,6 +23,7 @@ export interface RoomsWithConnectPlayerRoom {
   rooms: Room[];
   player: Player;
   room: Room | null;
+  winner: Player | null;
 }
 
 export interface ClientMessage {

@@ -14,7 +14,9 @@ import {
 } from "@repo/core/room";
 import { v4 as uuidv4 } from "uuid";
 const port = 8888;
-const rooms: Room[] = [];
+let rooms: Room[] = [];
+
+// TODO : need send message to other player, need send new rooms info to not start game player
 
 const server = createServer({
   // cert: readFileSync("/path/to/cert.pem"),
@@ -77,21 +79,189 @@ wss.on("connection", function connection(webSocket, req) {
           player,
           room: createRoom,
           rooms,
+          winner: null,
         };
 
         ws.send(JSON.stringify(createRoomData));
         break;
       }
-      case "joinRoom":
-        break;
-      case "leaveRoom":
-        // TODO
-        break;
-      case "restartGame":
-        break;
-      case "startGame":
-        break;
+      case "joinRoom": {
+        const player = {
+          id: playerId,
+          name: playerName,
+          roomId,
+          roomName,
+        };
 
+        rooms = rooms.reduce<Room[]>((acc, cur) => {
+          if (cur.id !== roomId) {
+            acc.push(cur);
+            return acc;
+          }
+
+          const isJoinPlayer1 = cur.player1 === null;
+
+          acc.push({
+            ...cur,
+            ...(isJoinPlayer1 ? { player1: player } : { player2: player }),
+          });
+
+          return acc;
+        }, []);
+
+        const joinRoomData: RoomsWithConnectPlayerRoom = {
+          player,
+          room: rooms.find((room) => room.id === roomId) ?? null,
+          rooms,
+          winner: null,
+        };
+
+        ws.send(JSON.stringify(joinRoomData));
+        break;
+      }
+      case "leaveRoom": {
+        rooms = rooms.reduce<Room[]>((acc, cur) => {
+          if (cur.id !== roomId) {
+            acc.push(cur);
+            return acc;
+          }
+
+          if (cur.player1 && cur.player2) {
+            const isPlayer1 = cur.player1.id === playerId;
+
+            acc.push({
+              ...cur,
+              ...(isPlayer1 ? { player1: null } : { player2: null }),
+            });
+          }
+
+          return acc;
+        }, []);
+
+        const player = {
+          id: playerId,
+          name: playerName,
+          roomId: null,
+          roomName: null,
+        };
+
+        const leaveRoomData: RoomsWithConnectPlayerRoom = {
+          player,
+          room: null,
+          rooms,
+          winner: null,
+        };
+
+        ws.send(JSON.stringify(leaveRoomData));
+        break;
+      }
+      case "restartGame": {
+        // the new current board is send from client
+        const player = {
+          id: playerId,
+          name: playerName,
+          roomId,
+          roomName,
+        };
+
+        rooms = rooms.reduce<Room[]>((acc, cur) => {
+          if (cur.id !== roomId) {
+            acc.push(cur);
+            return acc;
+          }
+
+          const isPlayer1Start = playerId === cur.player1?.id;
+
+          acc.push({
+            ...cur,
+            current,
+            lastPlayer: isPlayer1Start ? cur.player1 : cur.player2,
+          });
+
+          return acc;
+        }, []);
+
+        const joinRoomData: RoomsWithConnectPlayerRoom = {
+          player,
+          room: rooms.find((room) => room.id === roomId) ?? null,
+          rooms,
+          winner: null,
+        };
+
+        ws.send(JSON.stringify(joinRoomData));
+        break;
+      }
+      case "startGame": {
+        // the new current board is send from client
+        const player = {
+          id: playerId,
+          name: playerName,
+          roomId,
+          roomName,
+        };
+
+        rooms = rooms.reduce<Room[]>((acc, cur) => {
+          if (cur.id !== roomId) {
+            acc.push(cur);
+            return acc;
+          }
+
+          const isPlayer1Start = playerId === cur.player1?.id;
+
+          acc.push({
+            ...cur,
+            current,
+            lastPlayer: isPlayer1Start ? cur.player1 : cur.player2,
+          });
+
+          return acc;
+        }, []);
+
+        const joinRoomData: RoomsWithConnectPlayerRoom = {
+          player,
+          room: rooms.find((room) => room.id === roomId) ?? null,
+          rooms,
+          winner: null,
+        };
+
+        ws.send(JSON.stringify(joinRoomData));
+        break;
+        break;
+      }
+      case "go": {
+        // the new current board is send from client
+        const player = {
+          id: playerId,
+          name: playerName,
+          roomId,
+          roomName,
+        };
+
+        rooms = rooms.reduce<Room[]>((acc, cur) => {
+          if (cur.id !== roomId) {
+            acc.push(cur);
+            return acc;
+          }
+
+          acc.push({
+            ...cur,
+            current,
+            lastPlayer: player,
+          });
+
+          return acc;
+        }, []);
+
+        const joinRoomData: RoomsWithConnectPlayerRoom = {
+          player,
+          room: rooms.find((room) => room.id === roomId) ?? null,
+          rooms,
+          winner: null, // TODO: there should check winner, if no winner return null
+        };
+
+        ws.send(JSON.stringify(joinRoomData));
+        break;
+      }
       default:
         break;
     }
@@ -106,6 +276,7 @@ wss.on("connection", function connection(webSocket, req) {
     },
     room: null,
     rooms,
+    winner: null,
   };
 
   ws.send(JSON.stringify(initConnectData));

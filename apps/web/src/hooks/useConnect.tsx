@@ -35,6 +35,12 @@ export function useConnect({ url }: Param): Return {
   const { sendJsonMessage, readyState, lastJsonMessage } =
     useWebSocket<ConnectStore>(url, {
       onOpen: (event) => console.log("opened", event),
+      heartbeat: {
+        message: JSON.stringify("ping"),
+        returnMessage: "pong",
+        timeout: 10000,
+        interval: 5000, // every 5 seconds, a ping message will be sent
+      },
     });
 
   const connectionStatus = {
