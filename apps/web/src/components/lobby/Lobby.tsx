@@ -1,17 +1,19 @@
 import { ClientMessage } from "@repo/core/room";
 import RoomItem from "../room/roomList/RoomItem";
-import { useConnectStore } from "@/zustand/useConnectStore";
 import { useCallback } from "react";
 import { board } from "@/constant/board";
 import { useConnect } from "@/hooks/useConnect";
+import { useNavigate } from "react-router-dom";
 
 function Lobby() {
-  useConnect({ url: "ws://localhost:8888" });
+  const { sendJsonMessage, lastJsonMessage } = useConnect({
+    url: `ws://localhost:8888?name=${sessionStorage.getItem("playerName")}`,
+  });
 
-  const { sendJsonMessage, connectStore } = useConnectStore();
+  const navigate = useNavigate();
 
   const createRoom = useCallback(() => {
-    if (!connectStore) {
+    if (!lastJsonMessage) {
       return;
     }
 
@@ -28,14 +30,15 @@ function Lobby() {
           type: "createRoom",
           roomId: null,
           roomName: newRoomName,
-          playerId: connectStore.player.id,
-          playerName: connectStore.player.name,
+          playerId: lastJsonMessage.player.id,
+          playerName: lastJsonMessage.player.name,
           current: board,
         });
-      // console.log("new room created!");
+        // console.log("new room created!");
+        navigate("/room");
     }
     // if (newRoomId === null) return;
-  }, [connectStore, sendJsonMessage]);
+  }, [lastJsonMessage, navigate, sendJsonMessage]);
   return (
     <div>
       <h1>遊戲大廳</h1>
@@ -44,7 +47,7 @@ function Lobby() {
         創建房間
       </button>
       <ul>
-        {connectStore?.rooms.map(({ id, name }) => (
+        {lastJsonMessage?.rooms.map(({ id, name }) => (
           <RoomItem key={id} roomName={name} />
         ))}
       </ul>

@@ -270,7 +270,7 @@ wss.on("connection", function connection(webSocket, req) {
   const initConnectData: RoomsWithConnectPlayerRoom = {
     player: {
       id: clientID,
-      name: "name" + clientID,
+      name: (query?.name as string) ?? "name" + clientID,
       roomId: null,
       roomName: null,
     },

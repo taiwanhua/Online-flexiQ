@@ -39,7 +39,7 @@ export function useConnect({ url }: Param): Return {
         message: JSON.stringify("ping"),
         returnMessage: "pong",
         timeout: 10000,
-        interval: 5000, // every 5 seconds, a ping message will be sent
+        interval: 10000, // every 10 seconds, a ping message will be sent
       },
     });
 

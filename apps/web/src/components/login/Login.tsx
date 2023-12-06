@@ -10,7 +10,7 @@ function Login() {
       return;
     }
     if (typeof Storage !== "undefined") {
-      sessionStorage.setItem("playerId", name);
+      sessionStorage.setItem("playerName", name);
     }
     navigate("/lobby");
   };
