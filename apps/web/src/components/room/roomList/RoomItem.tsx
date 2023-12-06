@@ -1,13 +1,16 @@
 import { memo } from "react";
 import type { FC } from "react";
+import { useNavigate } from "react-router-dom";
 
 export interface RoomItemProps {
   roomName: string;
 }
 
 export const RoomItem: FC<RoomItemProps> = ({ roomName }) => {
+  const navigate = useNavigate();
+
   const connectRoom = () => {
-    console.log("Connect Room!");
+    navigate("/room");
   };
 
   return (
