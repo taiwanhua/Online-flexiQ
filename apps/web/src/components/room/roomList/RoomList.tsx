@@ -11,7 +11,7 @@ export const RoomList: FC<RoomListProps> = ({ roomList }) => {
     <nav>
       <ul>
         {roomList.map(({ id, name }) => (
-          <RoomItem key={id} roomName={name} />
+          <RoomItem key={id} roomId={id} roomName={name} />
         ))}
       </ul>
     </nav>

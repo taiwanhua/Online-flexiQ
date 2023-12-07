@@ -40,3 +40,10 @@ export interface ClientMessage {
   playerName: string;
   current: Board;
 }
+
+export interface QueryOfWS {
+  id: string;
+  name: string;
+  roomId: string;
+  roomName: string;
+}

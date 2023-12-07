@@ -1,17 +1,26 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useSessionStorageState } from "@/hooks/useSessionStorageState";
+import { sleep } from "@/utils/sleep";
 
 function Login() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const logIn = () => {
+  const [, setPlayerNameSession] = useSessionStorageState<string>(
+    "playerName",
+    "",
+  );
+  const logIn = async () => {
     if (name === "") {
       alert("請輸入暱稱!");
       return;
     }
     if (typeof Storage !== "undefined") {
-      sessionStorage.setItem("playerName", name);
+      setPlayerNameSession(name);
     }
+
+    await sleep();
+
     navigate("/lobby");
   };
   return (

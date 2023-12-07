@@ -1,18 +1,46 @@
-import { ClientMessage } from "@repo/core/room";
+import { ClientMessage, Player } from "@repo/core/room";
 import RoomItem from "../room/roomList/RoomItem";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { board } from "@/constant/board";
 import { useConnect } from "@/hooks/useConnect";
 import { useNavigate } from "react-router-dom";
+import { useSessionStorageState } from "@/hooks/useSessionStorageState";
+import { isEqual } from "lodash-es";
+import { sleep } from "@/utils/sleep";
 
 function Lobby() {
+  const [playerNameSession] = useSessionStorageState<Player | null>(
+    "playerName",
+    null,
+  );
+  const [playerInfoSession, setPlayerInfoSession] =
+    useSessionStorageState<Player | null>("playerInfo", null);
+
   const { sendJsonMessage, lastJsonMessage } = useConnect({
-    url: `ws://localhost:8888?name=${sessionStorage.getItem("playerName")}`,
+    url: `ws://localhost:8888?name=${playerNameSession}&id=${
+      playerInfoSession?.id ?? ""
+    }&roomId=${playerInfoSession?.roomId ?? ""}&roomName=${
+      playerInfoSession?.roomName ?? ""
+    }`,
   });
 
   const navigate = useNavigate();
 
-  const createRoom = useCallback(() => {
+  useEffect(() => {
+    if (
+      lastJsonMessage &&
+      !isEqual(lastJsonMessage.player, playerInfoSession)
+    ) {
+      setPlayerInfoSession(lastJsonMessage.player);
+    }
+  }, [
+    lastJsonMessage,
+    playerInfoSession,
+    playerInfoSession?.id,
+    setPlayerInfoSession,
+  ]);
+
+  const createRoom = useCallback(async () => {
     if (!lastJsonMessage) {
       return;
     }
@@ -34,6 +62,9 @@ function Lobby() {
           playerName: lastJsonMessage.player.name,
           current: board,
         });
+
+        await sleep();
+
         // console.log("new room created!");
         navigate("/room");
     }
@@ -48,7 +79,7 @@ function Lobby() {
       </button>
       <ul>
         {lastJsonMessage?.rooms.map(({ id, name }) => (
-          <RoomItem key={id} roomName={name} />
+          <RoomItem key={id} roomId={id} roomName={name} />
         ))}
       </ul>
     </div>

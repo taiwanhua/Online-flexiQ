@@ -9,6 +9,7 @@ import {
 } from "./connections/pingInterval.js";
 import {
   ClientMessage,
+  QueryOfWS,
   Room,
   RoomsWithConnectPlayerRoom,
 } from "@repo/core/room";
@@ -25,12 +26,14 @@ const server = createServer({
 const wss = new WebSocketServer({ server });
 
 wss.on("connection", function connection(webSocket, req) {
-  const { query } = parse(req.url ?? "", true);
+  // const { query } = parse(req.url ?? "", true);
+  const query = parse(req.url ?? "", true).query as unknown as QueryOfWS;
 
   console.log(query);
   const ws = webSocket as ExtWebSocket;
   ws.isAlive = true;
-  const clientID = uuidv4();
+  const isReconnect = Boolean(query.id);
+  const clientID = query.id ? query.id : uuidv4();
   ws.clientID = clientID;
 
   ws.on("error", console.error);
@@ -82,6 +85,14 @@ wss.on("connection", function connection(webSocket, req) {
           winner: null,
         };
 
+        // A client WebSocket broadcasting to every other connected WebSocket clients, excluding itself.
+        wss.clients.forEach(function each(client) {
+          if (client !== ws && client.readyState === 1) {
+            //WebSocket.OPEN =1
+            client.send(JSON.stringify(createRoomData));
+          }
+        });
+
         ws.send(JSON.stringify(createRoomData));
         break;
       }
@@ -115,6 +126,14 @@ wss.on("connection", function connection(webSocket, req) {
           rooms,
           winner: null,
         };
+
+        // A client WebSocket broadcasting to every other connected WebSocket clients, excluding itself.
+        wss.clients.forEach(function each(client) {
+          if (client !== ws && client.readyState === 1) {
+            //WebSocket.OPEN =1
+            client.send(JSON.stringify(joinRoomData));
+          }
+        });
 
         ws.send(JSON.stringify(joinRoomData));
         break;
@@ -151,6 +170,14 @@ wss.on("connection", function connection(webSocket, req) {
           rooms,
           winner: null,
         };
+
+        // A client WebSocket broadcasting to every other connected WebSocket clients, excluding itself.
+        wss.clients.forEach(function each(client) {
+          if (client !== ws && client.readyState === 1) {
+            //WebSocket.OPEN = 1
+            client.send(JSON.stringify(leaveRoomData));
+          }
+        });
 
         ws.send(JSON.stringify(leaveRoomData));
         break;
@@ -267,7 +294,7 @@ wss.on("connection", function connection(webSocket, req) {
     }
   });
 
-  const initConnectData: RoomsWithConnectPlayerRoom = {
+  let initConnectData: RoomsWithConnectPlayerRoom = {
     player: {
       id: clientID,
       name: (query?.name as string) ?? "name" + clientID,
@@ -278,6 +305,21 @@ wss.on("connection", function connection(webSocket, req) {
     rooms,
     winner: null,
   };
+
+  if (isReconnect) {
+    const playerRoom = rooms.find(({ id }) => id === query.roomId);
+    if (playerRoom) {
+      initConnectData = {
+        ...initConnectData,
+        room: playerRoom,
+        player: {
+          ...initConnectData.player,
+          roomId: playerRoom.id,
+          roomName: playerRoom.name,
+        },
+      };
+    }
+  }
 
   ws.send(JSON.stringify(initConnectData));
 });
