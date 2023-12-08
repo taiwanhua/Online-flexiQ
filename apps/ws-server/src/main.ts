@@ -13,9 +13,15 @@ import {
 } from "@repo/core/room";
 import { v4 as uuidv4 } from "uuid";
 import { broadcastToOtherClient } from "./connections/broadcastToOtherClient.js";
-const port = 8888;
-let rooms: Room[] = [];
-let players: Player[] = [];
+import { createRoom } from "./connections/message/createRoom.js";
+import { leaveRoom } from "./connections/message/leaveRoom.js";
+import { joinRoom } from "./connections/message/joinRoom.js";
+import { restartGame } from "./connections/message/restartGame.js";
+import { startGame } from "./connections/message/startGame.js";
+import { nextMove } from "./connections/message/nextMove.js";
+const port = 8888; //should be in .env
+const rooms: Room[] = [];
+const players: Player[] = [];
 
 // TODO : need send message to other player, need send new rooms info to not start game player
 
@@ -28,14 +34,18 @@ const wss = new WebSocketServer({ server });
 wss.on("connection", function connection(webSocket, req) {
   // const { query } = parse(req.url ?? "", true);
   const query = parse(req.url ?? "", true).query as unknown as QueryOfWS;
-
-  console.log(query);
+  // console.log(query);
+  // console.log("players", JSON.stringify(players));
   const ws = webSocket as ExtWebSocket;
   ws.isAlive = true;
+
   const findPlayer = players.find((player) => player.id === query.id);
+
   const isReconnect = Boolean(query.id) && Boolean(findPlayer);
+
   const clientID = isReconnect ? query.id : uuidv4();
   ws.clientID = clientID;
+
   const clientName = query.name ?? "name" + clientID;
 
   const initPlayer: Player = {
@@ -49,7 +59,6 @@ wss.on("connection", function connection(webSocket, req) {
     player: initPlayer,
     room: null,
     rooms,
-    winner: null,
   };
 
   if (isReconnect) {
@@ -79,255 +88,156 @@ wss.on("connection", function connection(webSocket, req) {
 
   ws.on("pong", heartbeat);
 
-  ws.on("ping", () => {
-    console.log("uuuu");
-    ws.send(JSON.stringify("pong"));
-  });
-
   ws.on("message", function message(data) {
-    let received: ClientMessage | null = null;
+    let clientMessage: ClientMessage | null = null;
     try {
-      received = JSON.parse(
+      clientMessage = JSON.parse(
         data as unknown as string,
       ) as unknown as ClientMessage;
     } catch (error) {
       console.log(error);
     }
-    if (!received) {
+    if (!clientMessage) {
       return;
     }
 
-    console.log("received: %s", received);
+    console.log("received clientMessage: %s", clientMessage);
 
-    const { type, playerId, current, playerName, roomId, roomName } = received;
-
-    switch (type) {
+    switch (clientMessage.type) {
       case "createRoom": {
-        const newRoomId = uuidv4();
-        const newRoomName = roomName ?? `roomName-${newRoomId}`;
-
-        const player = {
-          id: playerId,
-          name: playerName,
-          roomId: newRoomId,
-          roomName: newRoomName,
-        };
-
-        const createRoom = {
-          id: newRoomId,
-          name: newRoomName,
-          player1: player,
-          player2: null,
-          current,
-          lastPlayer: player,
-        };
-
-        rooms.push(createRoom);
-
-        players = players.map((playerData) =>
-          playerData.id === playerId ? player : playerData,
-        );
-
-        const createRoomData: RoomsWithConnectPlayerRoom = {
-          player,
-          room: createRoom,
+        const { responseData } = createRoom({
+          wss,
+          ws,
           rooms,
-          winner: null,
-        };
+          players,
+          clientMessage,
+        });
 
-        broadcastToOtherClient(wss, ws, rooms, players);
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: { to: "InLobby" },
+        });
 
-        ws.send(JSON.stringify(createRoomData));
+        ws.send(JSON.stringify(responseData));
         break;
       }
       case "joinRoom": {
-        const player = {
-          id: playerId,
-          name: playerName,
-          roomId,
-          roomName,
-        };
-
-        rooms = rooms.reduce<Room[]>((acc, cur) => {
-          if (cur.id !== roomId) {
-            acc.push(cur);
-            return acc;
-          }
-
-          const isJoinPlayer1 = cur.player1 === null;
-
-          acc.push({
-            ...cur,
-            ...(isJoinPlayer1 ? { player1: player } : { player2: player }),
-          });
-
-          return acc;
-        }, []);
-
-        players = players.map((playerData) =>
-          playerData.id === playerId ? player : playerData,
-        );
-
-        const joinRoomData: RoomsWithConnectPlayerRoom = {
-          player,
-          room: rooms.find((room) => room.id === roomId) ?? null,
+        const { responseData, opponentPlayer } = joinRoom({
+          wss,
+          ws,
           rooms,
-          winner: null,
-        };
+          players,
+          clientMessage,
+        });
 
-        broadcastToOtherClient(wss, ws, rooms, players);
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: {
+            to: "InLobbyAndOpponentPlayer",
+            OpponentPlayerID: opponentPlayer?.id ?? "",
+          },
+        });
 
-        ws.send(JSON.stringify(joinRoomData));
+        ws.send(JSON.stringify(responseData));
         break;
       }
       case "leaveRoom": {
-        rooms = rooms.reduce<Room[]>((acc, cur) => {
-          if (cur.id !== roomId) {
-            acc.push(cur);
-            return acc;
-          }
-
-          if (cur.player1 && cur.player2) {
-            const isPlayer1 = cur.player1.id === playerId;
-
-            acc.push({
-              ...cur,
-
-              ...(isPlayer1 ? { player1: null } : { player2: null }),
-            });
-          }
-
-          return acc;
-        }, []);
-
-        const player = {
-          id: playerId,
-          name: playerName,
-          roomId: null,
-          roomName: null,
-        };
-
-        players = players.map((playerData) =>
-          playerData.id === playerId ? player : playerData,
-        );
-
-        const leaveRoomData: RoomsWithConnectPlayerRoom = {
-          player,
-          room: null,
+        const { responseData, opponentPlayer } = leaveRoom({
+          wss,
+          ws,
           rooms,
-          winner: null,
-        };
+          players,
+          clientMessage,
+        });
 
-        broadcastToOtherClient(wss, ws, rooms, players);
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: {
+            to: "InLobbyAndOpponentPlayer",
+            OpponentPlayerID: opponentPlayer?.id ?? "",
+          },
+        });
 
-        ws.send(JSON.stringify(leaveRoomData));
+        ws.send(JSON.stringify(responseData));
         break;
       }
       case "restartGame": {
-        // the new current board is send from client
-        const player = {
-          id: playerId,
-          name: playerName,
-          roomId,
-          roomName,
-        };
-
-        rooms = rooms.reduce<Room[]>((acc, cur) => {
-          if (cur.id !== roomId) {
-            acc.push(cur);
-            return acc;
-          }
-
-          const isPlayer1Start = playerId === cur.player1?.id;
-
-          acc.push({
-            ...cur,
-            current,
-            lastPlayer: isPlayer1Start ? cur.player1 : cur.player2,
-          });
-
-          return acc;
-        }, []);
-
-        const joinRoomData: RoomsWithConnectPlayerRoom = {
-          player,
-          room: rooms.find((room) => room.id === roomId) ?? null,
+        const { responseData, opponentPlayer } = restartGame({
+          wss,
+          ws,
           rooms,
-          winner: null,
-        };
+          players,
+          clientMessage,
+        });
 
-        ws.send(JSON.stringify(joinRoomData));
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: {
+            to: "OpponentPlayer",
+            OpponentPlayerID: opponentPlayer?.id ?? "",
+          },
+        });
+
+        ws.send(JSON.stringify(responseData));
         break;
       }
       case "startGame": {
-        // the new current board is send from client
-        const player = {
-          id: playerId,
-          name: playerName,
-          roomId,
-          roomName,
-        };
-
-        rooms = rooms.reduce<Room[]>((acc, cur) => {
-          if (cur.id !== roomId) {
-            acc.push(cur);
-            return acc;
-          }
-
-          const isPlayer1Start = playerId === cur.player1?.id;
-
-          acc.push({
-            ...cur,
-            current,
-            lastPlayer: isPlayer1Start ? cur.player1 : cur.player2,
-          });
-
-          return acc;
-        }, []);
-
-        const joinRoomData: RoomsWithConnectPlayerRoom = {
-          player,
-          room: rooms.find((room) => room.id === roomId) ?? null,
+        const { responseData, opponentPlayer } = startGame({
+          wss,
+          ws,
           rooms,
-          winner: null,
-        };
+          players,
+          clientMessage,
+        });
 
-        ws.send(JSON.stringify(joinRoomData));
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: {
+            to: "OpponentPlayer",
+            OpponentPlayerID: opponentPlayer?.id ?? "",
+          },
+        });
+
+        ws.send(JSON.stringify(responseData));
         break;
         break;
       }
-      case "go": {
-        // the new current board is send from client
-        const player = {
-          id: playerId,
-          name: playerName,
-          roomId,
-          roomName,
-        };
-
-        rooms = rooms.reduce<Room[]>((acc, cur) => {
-          if (cur.id !== roomId) {
-            acc.push(cur);
-            return acc;
-          }
-
-          acc.push({
-            ...cur,
-            current,
-            lastPlayer: player,
-          });
-
-          return acc;
-        }, []);
-
-        const joinRoomData: RoomsWithConnectPlayerRoom = {
-          player,
-          room: rooms.find((room) => room.id === roomId) ?? null,
+      case "nextMove": {
+        const { responseData, opponentPlayer } = nextMove({
+          wss,
+          ws,
           rooms,
-          winner: null, // TODO: there should check winner, if no winner return null
-        };
+          players,
+          clientMessage,
+        });
 
-        ws.send(JSON.stringify(joinRoomData));
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: {
+            to: "OpponentPlayer",
+            OpponentPlayerID: opponentPlayer?.id ?? "",
+          },
+        });
+
+        ws.send(JSON.stringify(responseData));
         break;
       }
       default: {

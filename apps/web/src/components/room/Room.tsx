@@ -16,7 +16,7 @@ function Room() {
 
     sendJsonMessage<ClientMessage>({
       type: "leaveRoom",
-      roomId: connectStore.player?.roomId,
+      roomId: connectStore.player?.roomId ?? "",
       roomName: connectStore.player?.roomName ?? "",
       playerId: connectStore.player.id,
       playerName: connectStore.player.name,
