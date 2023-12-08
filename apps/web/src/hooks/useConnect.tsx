@@ -1,10 +1,12 @@
 import { ConnectStore, useConnectStore } from "@/zustand/useConnectStore";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { isEqual } from "lodash-es";
+import { Player } from "@repo/core/room";
+import { useSessionStorageState } from "@/hooks/useSessionStorageState";
+import queryString from "query-string";
 
 export interface Param {
-  url: string;
+  url?: string;
 }
 
 export type SendJsonMessage = ReturnType<
@@ -24,7 +26,10 @@ export interface Return {
   lastJsonMessage: ConnectStore;
 }
 
-export function useConnect({ url }: Param): Return {
+export function useConnect({ url: urlParam }: Param): Return {
+  const [playerInfoSession, setPlayerInfoSession] =
+    useSessionStorageState<Player | null>("playerInfo", null);
+
   const {
     connectStore,
     setConnectStore,
@@ -32,9 +37,42 @@ export function useConnect({ url }: Param): Return {
     setConnectionStatus,
   } = useConnectStore();
 
+  const url = useMemo(() => {
+    if (urlParam) {
+      return urlParam;
+    }
+    console.log(connectStore?.player);
+    return queryString.stringifyUrl({
+      url: "ws://localhost:8888",
+      query: connectStore
+        ? { ...connectStore.player }
+        : { ...playerInfoSession },
+    });
+  }, [connectStore, playerInfoSession, urlParam]);
+
   const { sendJsonMessage, readyState, lastJsonMessage } =
     useWebSocket<ConnectStore>(url, {
-      onOpen: (event) => console.log("opened", event),
+      onOpen: (event) => {
+        console.log("opened", event);
+        setSendJsonMessage(sendJsonMessage);
+      },
+      onMessage: (event) => {
+        console.log("onMessage", event);
+        let nextConnectStore: ConnectStore | null | "pong" = null;
+        try {
+          nextConnectStore = JSON.parse(event.data) as unknown as
+            | ConnectStore
+            | "pong";
+        } catch (error) {
+          console.log(error);
+        }
+        if (!nextConnectStore || nextConnectStore === "pong") {
+          return;
+        }
+
+        setPlayerInfoSession(nextConnectStore.player);
+        setConnectStore(nextConnectStore);
+      },
       heartbeat: {
         message: JSON.stringify("ping"),
         returnMessage: "pong",
@@ -52,26 +90,8 @@ export function useConnect({ url }: Param): Return {
   }[readyState] as ConnectionStatus;
 
   useEffect(() => {
-    if (connectionStatus === "Open") {
-      setSendJsonMessage(sendJsonMessage);
-    }
     setConnectionStatus(connectionStatus);
-  }, [
-    connectionStatus,
-    sendJsonMessage,
-    setConnectionStatus,
-    setSendJsonMessage,
-  ]);
-
-  useEffect(() => {
-    if (
-      lastJsonMessage !== null &&
-      lastJsonMessage !== undefined &&
-      !isEqual(connectStore, lastJsonMessage)
-    ) {
-      setConnectStore(lastJsonMessage);
-    }
-  }, [connectStore, lastJsonMessage, setConnectStore]);
+  }, [connectionStatus, setConnectionStatus]);
 
   return {
     connectionStatus,

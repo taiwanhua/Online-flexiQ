@@ -1,28 +1,30 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { useSessionStorageState } from "@/hooks/useSessionStorageState";
-import { sleep } from "@/utils/sleep";
+import { useState, useCallback } from "react";
+import { useConnectStore } from "@/zustand/useConnectStore";
 
 function Login() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [, setPlayerNameSession] = useSessionStorageState<string>(
-    "playerName",
-    "",
-  );
-  const logIn = async () => {
+
+  const { connectStore, setConnectStore } = useConnectStore();
+
+  const logIn = useCallback(async () => {
     if (name === "") {
       alert("請輸入暱稱!");
       return;
     }
-    if (typeof Storage !== "undefined") {
-      setPlayerNameSession(name);
+    if (typeof Storage !== "undefined" && connectStore) {
+      setConnectStore({
+        ...connectStore,
+        player: { ...connectStore.player, name },
+      });
     }
 
-    await sleep();
+    // await sleep();
 
     navigate("/lobby");
-  };
+  }, [connectStore, name, navigate, setConnectStore]);
+
   return (
     <div>
       輸入暱稱

@@ -35,7 +35,7 @@ export interface ClientMessage {
     | "restartGame"
     | "go";
   roomId: string | null;
-  roomName: string;
+  roomName: string | null;
   playerId: string;
   playerName: string;
   current: Board;

@@ -2,20 +2,20 @@ import { createServer } from "http";
 import { parse } from "url";
 // import { readFileSync } from "fs";
 import { WebSocketServer } from "ws";
-import {
-  heartbeat,
-  ExtWebSocket,
-  pingInterval,
-} from "./connections/pingInterval.js";
+import { heartbeat, pingInterval } from "./connections/pingInterval.js";
+import { ExtWebSocket } from "./types/extWebSocket.js";
 import {
   ClientMessage,
+  Player,
   QueryOfWS,
   Room,
   RoomsWithConnectPlayerRoom,
 } from "@repo/core/room";
 import { v4 as uuidv4 } from "uuid";
+import { broadcastToOtherClient } from "./connections/broadcastToOtherClient.js";
 const port = 8888;
 let rooms: Room[] = [];
+let players: Player[] = [];
 
 // TODO : need send message to other player, need send new rooms info to not start game player
 
@@ -32,13 +32,57 @@ wss.on("connection", function connection(webSocket, req) {
   console.log(query);
   const ws = webSocket as ExtWebSocket;
   ws.isAlive = true;
-  const isReconnect = Boolean(query.id);
-  const clientID = query.id ? query.id : uuidv4();
+  const findPlayer = players.find((player) => player.id === query.id);
+  const isReconnect = Boolean(query.id) && Boolean(findPlayer);
+  const clientID = isReconnect ? query.id : uuidv4();
   ws.clientID = clientID;
+  const clientName = query.name ?? "name" + clientID;
 
+  const initPlayer: Player = {
+    id: clientID,
+    name: clientName,
+    roomId: null,
+    roomName: null,
+  };
+
+  let initConnectData: RoomsWithConnectPlayerRoom = {
+    player: initPlayer,
+    room: null,
+    rooms,
+    winner: null,
+  };
+
+  if (isReconnect) {
+    //check if have room
+    const playerRoom = rooms.find(({ id }) => id === query.roomId) ?? null;
+
+    if (playerRoom) {
+      initConnectData = {
+        ...initConnectData,
+        room: playerRoom,
+        player: {
+          ...initConnectData.player,
+          name: clientName,
+          roomId: playerRoom.id,
+          roomName: playerRoom.name,
+        },
+      };
+    }
+  } else {
+    players.push(initPlayer);
+  }
+
+  ws.send(JSON.stringify(initConnectData));
+
+  // events write down here
   ws.on("error", console.error);
 
   ws.on("pong", heartbeat);
+
+  ws.on("ping", () => {
+    console.log("uuuu");
+    ws.send(JSON.stringify("pong"));
+  });
 
   ws.on("message", function message(data) {
     let received: ClientMessage | null = null;
@@ -60,16 +104,18 @@ wss.on("connection", function connection(webSocket, req) {
     switch (type) {
       case "createRoom": {
         const newRoomId = uuidv4();
+        const newRoomName = roomName ?? `roomName-${newRoomId}`;
+
         const player = {
           id: playerId,
           name: playerName,
           roomId: newRoomId,
-          roomName,
+          roomName: newRoomName,
         };
 
         const createRoom = {
           id: newRoomId,
-          name: roomName,
+          name: newRoomName,
           player1: player,
           player2: null,
           current,
@@ -78,6 +124,10 @@ wss.on("connection", function connection(webSocket, req) {
 
         rooms.push(createRoom);
 
+        players = players.map((playerData) =>
+          playerData.id === playerId ? player : playerData,
+        );
+
         const createRoomData: RoomsWithConnectPlayerRoom = {
           player,
           room: createRoom,
@@ -85,13 +135,7 @@ wss.on("connection", function connection(webSocket, req) {
           winner: null,
         };
 
-        // A client WebSocket broadcasting to every other connected WebSocket clients, excluding itself.
-        wss.clients.forEach(function each(client) {
-          if (client !== ws && client.readyState === 1) {
-            //WebSocket.OPEN =1
-            client.send(JSON.stringify(createRoomData));
-          }
-        });
+        broadcastToOtherClient(wss, ws, rooms, players);
 
         ws.send(JSON.stringify(createRoomData));
         break;
@@ -120,6 +164,10 @@ wss.on("connection", function connection(webSocket, req) {
           return acc;
         }, []);
 
+        players = players.map((playerData) =>
+          playerData.id === playerId ? player : playerData,
+        );
+
         const joinRoomData: RoomsWithConnectPlayerRoom = {
           player,
           room: rooms.find((room) => room.id === roomId) ?? null,
@@ -127,13 +175,7 @@ wss.on("connection", function connection(webSocket, req) {
           winner: null,
         };
 
-        // A client WebSocket broadcasting to every other connected WebSocket clients, excluding itself.
-        wss.clients.forEach(function each(client) {
-          if (client !== ws && client.readyState === 1) {
-            //WebSocket.OPEN =1
-            client.send(JSON.stringify(joinRoomData));
-          }
-        });
+        broadcastToOtherClient(wss, ws, rooms, players);
 
         ws.send(JSON.stringify(joinRoomData));
         break;
@@ -150,6 +192,7 @@ wss.on("connection", function connection(webSocket, req) {
 
             acc.push({
               ...cur,
+
               ...(isPlayer1 ? { player1: null } : { player2: null }),
             });
           }
@@ -164,6 +207,10 @@ wss.on("connection", function connection(webSocket, req) {
           roomName: null,
         };
 
+        players = players.map((playerData) =>
+          playerData.id === playerId ? player : playerData,
+        );
+
         const leaveRoomData: RoomsWithConnectPlayerRoom = {
           player,
           room: null,
@@ -171,13 +218,7 @@ wss.on("connection", function connection(webSocket, req) {
           winner: null,
         };
 
-        // A client WebSocket broadcasting to every other connected WebSocket clients, excluding itself.
-        wss.clients.forEach(function each(client) {
-          if (client !== ws && client.readyState === 1) {
-            //WebSocket.OPEN = 1
-            client.send(JSON.stringify(leaveRoomData));
-          }
-        });
+        broadcastToOtherClient(wss, ws, rooms, players);
 
         ws.send(JSON.stringify(leaveRoomData));
         break;
@@ -289,39 +330,14 @@ wss.on("connection", function connection(webSocket, req) {
         ws.send(JSON.stringify(joinRoomData));
         break;
       }
-      default:
+      default: {
+        // other message like ping
+        console.log("pong");
+        ws.send(JSON.stringify("pong"));
         break;
+      }
     }
   });
-
-  let initConnectData: RoomsWithConnectPlayerRoom = {
-    player: {
-      id: clientID,
-      name: (query?.name as string) ?? "name" + clientID,
-      roomId: null,
-      roomName: null,
-    },
-    room: null,
-    rooms,
-    winner: null,
-  };
-
-  if (isReconnect) {
-    const playerRoom = rooms.find(({ id }) => id === query.roomId);
-    if (playerRoom) {
-      initConnectData = {
-        ...initConnectData,
-        room: playerRoom,
-        player: {
-          ...initConnectData.player,
-          roomId: playerRoom.id,
-          roomName: playerRoom.name,
-        },
-      };
-    }
-  }
-
-  ws.send(JSON.stringify(initConnectData));
 });
 
 // to detect and close broken connections

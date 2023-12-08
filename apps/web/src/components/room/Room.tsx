@@ -1,50 +1,42 @@
 import { useNavigate } from "react-router-dom";
-import Checkerboard from "../checkerboard/Checkerboard";
-import { useSessionStorageState } from "@/hooks/useSessionStorageState";
-import { ClientMessage, Player } from "@repo/core/room";
-import { useConnect } from "@/hooks/useConnect";
+import { ClientMessage } from "@repo/core/room";
 import { board } from "@/constant/board";
-import { sleep } from "@/utils/sleep";
 import { useCallback } from "react";
+import { useConnectStore } from "@/zustand/useConnectStore";
 
 function Room() {
-  const [playerNameSession] = useSessionStorageState<Player | null>(
-    "playerName",
-    null,
-  );
-  const [playerInfoSession, setPlayerInfoSession] =
-    useSessionStorageState<Player | null>("playerInfo", null);
-
-  const { sendJsonMessage, lastJsonMessage } = useConnect({
-    url: `ws://localhost:8888?name=${playerNameSession}&id=${playerInfoSession?.id}&roomId=${playerInfoSession?.roomId}&roomName=${playerInfoSession?.roomName}`,
-  });
+  const { connectStore, sendJsonMessage } = useConnectStore();
 
   const navigate = useNavigate();
 
   const leaveRoom = useCallback(async () => {
-    if (!playerInfoSession) {
+    if (!connectStore?.player) {
       return;
     }
+
     sendJsonMessage<ClientMessage>({
       type: "leaveRoom",
-      roomId: playerInfoSession?.roomId,
-      roomName: playerInfoSession?.roomName ?? "",
-      playerId: playerInfoSession.id,
-      playerName: playerInfoSession.name,
+      roomId: connectStore.player?.roomId,
+      roomName: connectStore.player?.roomName ?? "",
+      playerId: connectStore.player.id,
+      playerName: connectStore.player.name,
       current: board,
     });
 
-    await sleep();
+    // await sleep();
 
     navigate("/lobby");
-  }, [navigate, playerInfoSession, sendJsonMessage]);
+  }, [connectStore?.player, navigate, sendJsonMessage]);
 
   return (
     <div>
       <button onClick={leaveRoom} type="button">
         回大廳
       </button>
-      <Checkerboard />
+      {JSON.stringify(connectStore?.room?.player1)}
+      {JSON.stringify(connectStore?.room?.player2)}
+
+      {/* <Checkerboard /> */}
     </div>
   );
 }

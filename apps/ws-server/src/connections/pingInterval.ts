@@ -1,15 +1,7 @@
-import type { IncomingMessage } from "http";
-import WebSocket from "ws";
-// https://github.com/DefinitelyTyped/DefinitelyTyped/issues/20780
-export interface ExtWebSocket extends WebSocket {
-  isAlive: boolean;
-  clientID: string;
-}
+import { ExtWebSocket, WebSocket, Wss } from "../types/extWebSocket.js";
 
 // to detect and close broken connections
-export const pingInterval = (
-  wss: WebSocket.Server<typeof WebSocket, typeof IncomingMessage>,
-) =>
+export const pingInterval = (wss: Wss) =>
   setInterval(function ping() {
     wss.clients.forEach(function each(webSocket) {
       const ws = webSocket as ExtWebSocket;

@@ -1,5 +1,4 @@
 import { board } from "@/constant/board";
-import { sleep } from "@/utils/sleep";
 import { useConnectStore } from "@/zustand/useConnectStore";
 import { ClientMessage } from "@repo/core/room";
 import { memo, useCallback } from "react";
@@ -30,7 +29,7 @@ export const RoomItem: FC<RoomItemProps> = ({ roomId, roomName }) => {
       current: connectStore.room?.current ?? board,
     });
 
-    await sleep();
+    // await sleep();
 
     navigate("/room");
   }, [connectStore, navigate, roomId, roomName, sendJsonMessage]);

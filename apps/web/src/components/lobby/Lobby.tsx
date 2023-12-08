@@ -1,47 +1,17 @@
-import { ClientMessage, Player } from "@repo/core/room";
+import { ClientMessage } from "@repo/core/room";
 import RoomItem from "../room/roomList/RoomItem";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { board } from "@/constant/board";
-import { useConnect } from "@/hooks/useConnect";
 import { useNavigate } from "react-router-dom";
-import { useSessionStorageState } from "@/hooks/useSessionStorageState";
-import { isEqual } from "lodash-es";
-import { sleep } from "@/utils/sleep";
+import { useConnectStore } from "@/zustand/useConnectStore";
 
 function Lobby() {
-  const [playerNameSession] = useSessionStorageState<Player | null>(
-    "playerName",
-    null,
-  );
-  const [playerInfoSession, setPlayerInfoSession] =
-    useSessionStorageState<Player | null>("playerInfo", null);
-
-  const { sendJsonMessage, lastJsonMessage } = useConnect({
-    url: `ws://localhost:8888?name=${playerNameSession}&id=${
-      playerInfoSession?.id ?? ""
-    }&roomId=${playerInfoSession?.roomId ?? ""}&roomName=${
-      playerInfoSession?.roomName ?? ""
-    }`,
-  });
+  const { connectStore, sendJsonMessage } = useConnectStore();
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (
-      lastJsonMessage &&
-      !isEqual(lastJsonMessage.player, playerInfoSession)
-    ) {
-      setPlayerInfoSession(lastJsonMessage.player);
-    }
-  }, [
-    lastJsonMessage,
-    playerInfoSession,
-    playerInfoSession?.id,
-    setPlayerInfoSession,
-  ]);
-
   const createRoom = useCallback(async () => {
-    if (!lastJsonMessage) {
+    if (!connectStore) {
       return;
     }
 
@@ -54,22 +24,23 @@ function Lobby() {
         alert("房名不能為空!");
         return;
       default:
+        console.log("sendJsonMessage", sendJsonMessage);
         sendJsonMessage<ClientMessage>({
           type: "createRoom",
           roomId: null,
           roomName: newRoomName,
-          playerId: lastJsonMessage.player.id,
-          playerName: lastJsonMessage.player.name,
+          playerId: connectStore.player.id,
+          playerName: connectStore.player.name,
           current: board,
         });
 
-        await sleep();
+        // await sleep();
 
         // console.log("new room created!");
         navigate("/room");
     }
-    // if (newRoomId === null) return;
-  }, [lastJsonMessage, navigate, sendJsonMessage]);
+  }, [connectStore, navigate, sendJsonMessage]);
+
   return (
     <div>
       <h1>遊戲大廳</h1>
@@ -78,7 +49,7 @@ function Lobby() {
         創建房間
       </button>
       <ul>
-        {lastJsonMessage?.rooms.map(({ id, name }) => (
+        {connectStore?.rooms.map(({ id, name }) => (
           <RoomItem key={id} roomId={id} roomName={name} />
         ))}
       </ul>
