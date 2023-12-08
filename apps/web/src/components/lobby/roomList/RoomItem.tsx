@@ -8,9 +8,10 @@ import { useNavigate } from "react-router-dom";
 export interface RoomItemProps {
   roomId: string;
   roomName: string;
+  isFull: boolean;
 }
 
-export const RoomItem: FC<RoomItemProps> = ({ roomId, roomName }) => {
+export const RoomItem: FC<RoomItemProps> = ({ roomId, roomName, isFull }) => {
   const navigate = useNavigate();
 
   const { connectStore, sendJsonMessage } = useConnectStore();
@@ -36,8 +37,14 @@ export const RoomItem: FC<RoomItemProps> = ({ roomId, roomName }) => {
 
   return (
     <li className="room">
-      <button className="room_btn" onClick={connectRoom} type="button">
+      <button
+        className="room_btn"
+        disabled={isFull}
+        onClick={isFull ? undefined : connectRoom}
+        type="button"
+      >
         {roomName}
+        {isFull ? " (Room is full)" : null}
       </button>
     </li>
   );

@@ -8,13 +8,16 @@ export interface RoomListProps {
 
 export const RoomList: FC<RoomListProps> = ({ roomList }) => {
   return (
-    <nav>
-      <ul>
-        {roomList.map(({ id, name }) => (
-          <RoomItem key={id} roomId={id} roomName={name} />
-        ))}
-      </ul>
-    </nav>
+    <ul>
+      {roomList.map(({ id, name, player1, player2 }) => (
+        <RoomItem
+          isFull={Boolean(player1 && player2)}
+          key={id}
+          roomId={id}
+          roomName={name}
+        />
+      ))}
+    </ul>
   );
 };
 

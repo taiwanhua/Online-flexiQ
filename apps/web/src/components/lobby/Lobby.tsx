@@ -1,5 +1,5 @@
 import { ClientMessage } from "@repo/core/room";
-import RoomItem from "../room/roomList/RoomItem";
+import RoomList from "@/components/lobby/roomList/RoomList";
 import { useCallback } from "react";
 import { board } from "@/constant/board";
 import { useNavigate } from "react-router-dom";
@@ -48,11 +48,8 @@ function Lobby() {
       <button onClick={createRoom} type="button">
         創建房間
       </button>
-      <ul>
-        {connectStore?.rooms.map(({ id, name }) => (
-          <RoomItem key={id} roomId={id} roomName={name} />
-        ))}
-      </ul>
+
+      <RoomList roomList={connectStore?.rooms ?? []} />
     </div>
   );
 }

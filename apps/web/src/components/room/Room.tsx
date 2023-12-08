@@ -3,6 +3,7 @@ import { ClientMessage } from "@repo/core/room";
 import { board } from "@/constant/board";
 import { useCallback } from "react";
 import { useConnectStore } from "@/zustand/useConnectStore";
+import Checkerboard from "@/components/checkerboard/Checkerboard";
 
 function Room() {
   const { connectStore, sendJsonMessage } = useConnectStore();
@@ -36,7 +37,7 @@ function Room() {
       {JSON.stringify(connectStore?.room?.player1)}
       {JSON.stringify(connectStore?.room?.player2)}
 
-      {/* <Checkerboard /> */}
+      <Checkerboard />
     </div>
   );
 }

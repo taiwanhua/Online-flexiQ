@@ -1,35 +1,10 @@
-import { useState, useEffect, useCallback, memo } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useCallback, memo, useMemo } from "react";
 import Rule from "@/components/rule/Rule";
 import { board } from "@/constant/board";
+import { useConnectStore } from "@/zustand/useConnectStore";
 
 function Checkerboard(): JSX.Element {
-  //Public API that will echo messages sent to it back to the client
-  const [socketUrl, setSocketUrl] = useState("ws://localhost:8888?");
-  const [messageHistory, setMessageHistory] = useState([]);
-
-  const { sendJsonMessage, readyState, lastJsonMessage } = useWebSocket(
-    socketUrl,
-    {
-      onOpen: (event) => console.log("opened", event),
-    },
-  );
-
-  useEffect(() => {
-    if (lastJsonMessage !== null) {
-      setMessageHistory((prev) => prev.concat(lastJsonMessage));
-    }
-  }, [lastJsonMessage]);
-
-  const handleClickChangeSocketUrl = useCallback(
-    () => setSocketUrl("ws://localhost:8888?ss=1"),
-    [],
-  );
-
-  const handleClickSendMessage = useCallback(
-    () => sendJsonMessage("Hello"),
-    [],
-  );
+  const { connectStore, sendJsonMessage, connectionStatus } = useConnectStore();
 
   const handleClickSendCreate = useCallback(() => {
     sendJsonMessage({
@@ -42,13 +17,17 @@ function Checkerboard(): JSX.Element {
     });
   }, [sendJsonMessage]);
 
-  const connectionStatus = {
-    [ReadyState.CONNECTING]: "Connecting",
-    [ReadyState.OPEN]: "Open",
-    [ReadyState.CLOSING]: "Closing",
-    [ReadyState.CLOSED]: "Closed",
-    [ReadyState.UNINSTANTIATED]: "Uninstantiated",
-  }[readyState];
+  const whoCanPlay = useMemo(
+    () =>
+      connectStore?.room?.lastPlayer?.id === connectStore?.room?.player1?.id
+        ? "player2"
+        : "player1",
+    [connectStore?.room?.lastPlayer?.id, connectStore?.room?.player1?.id],
+  );
+
+  if (!connectionStatus) {
+    return <span>The WebSocket is currently {connectionStatus}</span>;
+  }
 
   return (
     <div className="checker_board">
@@ -62,41 +41,28 @@ function Checkerboard(): JSX.Element {
           重新
         </div> */}
         {/* <!-- <div id="undo" className="btn">悔棋</div> --> */}
-        <div id="checkWinner" className="btn">
+        <div className="btn" id="checkWinner">
           旋轉
         </div>
       </div>
 
       <div id="board" />
       <div>
-        <button onClick={handleClickChangeSocketUrl}>
-          Click Me to change Socket Url
-        </button>
         <button
-          onClick={handleClickSendMessage}
-          disabled={readyState !== ReadyState.OPEN}
-        >
-          Click Me to send 'Hello'
-        </button>
-
-        <button
+          disabled={connectionStatus !== "Open"}
           onClick={handleClickSendCreate}
-          disabled={readyState !== ReadyState.OPEN}
+          type="button"
         >
           Click create
         </button>
-        <span>The WebSocket is currently {connectionStatus}</span>
-        {lastJsonMessage ? (
-          <span>Last message: {JSON.stringify(lastJsonMessage)}</span>
-        ) : null}
-        <ul>
-          {messageHistory.map((message, idx) => (
-            <span key={idx}>{message ? JSON.stringify(message) : null}</span>
-          ))}
-        </ul>
-        {readyState}
+
+        <div>Player 1:{connectStore?.room?.player1?.name}</div>
+        <div>VS</div>
+        <div>Player 2:{connectStore?.room?.player2?.name}</div>
+        <div> {whoCanPlay}, Please move the chess</div>
+
+        <Rule />
       </div>
-      <Rule />
     </div>
   );
 }
