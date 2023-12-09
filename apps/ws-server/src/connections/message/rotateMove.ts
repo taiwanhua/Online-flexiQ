@@ -47,7 +47,7 @@ export const rotateMove = ({
 
     opponentPlayer = playerId === cur.player1.id ? cur.player2 : cur.player1;
 
-    const winnerResult = checkWinner(cur.current);
+    const winnerResult = checkWinner(current);
 
     let winner: Winner = null;
 
