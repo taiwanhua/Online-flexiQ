@@ -18,15 +18,19 @@ import { sleep } from "@/utils/sleep";
 export interface BoardProps {
   isCanPlay: boolean;
   playerPieceColor: Exclude<TileType, ""> | null;
+  opponentPlayerPieceColor: Exclude<TileType, ""> | null;
 }
 
 export const Board: FC<BoardProps> = ({
   isCanPlay: isCanPlayFromParent,
   playerPieceColor,
+  opponentPlayerPieceColor,
 }) => {
   const { connectStore, sendJsonMessage } = useConnectStore();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isMovedOpponentPiece, setIsMovedOpponentPiece] =
+    useState<boolean>(false);
   const [nowSelectPieces, setNowSelectPieces] = useState<Position[]>([]);
   const [aroundPositions, setAroundPositions] = useState<Position[]>([]);
 
@@ -38,6 +42,7 @@ export const Board: FC<BoardProps> = ({
   const resetState = useCallback(() => {
     setNowSelectPieces([]);
     setAroundPositions([]);
+    setIsMovedOpponentPiece(false);
   }, []);
 
   // bind in b & w Piece
@@ -69,7 +74,12 @@ export const Board: FC<BoardProps> = ({
         return;
       }
 
-      if (!connectStore || !connectStore.room?.current || !playerPieceColor) {
+      if (
+        !connectStore ||
+        !connectStore.room?.current ||
+        !playerPieceColor ||
+        !opponentPlayerPieceColor
+      ) {
         return;
       }
 
@@ -77,26 +87,31 @@ export const Board: FC<BoardProps> = ({
 
       const board = connectStore.room.current;
 
-      if (nowSelectPieces.length) {
+      if (nowSelectPieces.length && !isMovedOpponentPiece) {
         board[nowSelectPieces[0].rowIndex][nowSelectPieces[0].columnIndex] = "";
+        board[rowIndex][columnIndex] = opponentPlayerPieceColor;
+        setIsMovedOpponentPiece(true);
+        setAroundPositions([]);
+        setNowSelectPieces([]);
+        setIsLoading(false);
+        sendJsonMessage<NextMoveClientMessage>({
+          type: "nextMove",
+          roomId: connectStore.room.id,
+          roomName: connectStore.room.name,
+          playerId: connectStore.player.id,
+          playerName: connectStore.player.name,
+          current: board,
+        });
+        return;
       }
 
       board[rowIndex][columnIndex] = playerPieceColor;
 
-      resetState();
-
-      sendJsonMessage<NextMoveClientMessage>({
-        type: "nextMove",
-        roomId: connectStore.room.id,
-        roomName: connectStore.room.name,
-        playerId: connectStore.player.id,
-        playerName: connectStore.player.name,
-        current: board,
-      });
-
       await sleep(1000);
 
       rotate(board);
+
+      resetState();
 
       sendJsonMessage<RotateMoveClientMessage>({
         type: "rotateMove",
@@ -113,7 +128,9 @@ export const Board: FC<BoardProps> = ({
     [
       aroundPositions,
       connectStore,
+      isMovedOpponentPiece,
       nowSelectPieces,
+      opponentPlayerPieceColor,
       playerPieceColor,
       resetState,
       sendJsonMessage,
@@ -125,64 +142,73 @@ export const Board: FC<BoardProps> = ({
   }
 
   return (
-    <div id="board">
-      {connectStore.room?.current.flatMap((row, rowIndex) => {
-        return row.map((column, columnIndex) => {
-          const position = { rowIndex, columnIndex };
-          const isSelect = isEqual(nowSelectPieces[0], position);
+    <>
+      <div id="board">
+        {connectStore.room?.current.flatMap((row, rowIndex) => {
+          return row.map((column, columnIndex) => {
+            const position = { rowIndex, columnIndex };
+            const isSelect = isEqual(nowSelectPieces[0], position);
 
-          const key = `${column}-${rowIndex}-${columnIndex}`;
-          if (column === "b") {
-            return (
-              <Tile
-                className={getClassName(["tile", isSelect ? "select" : ""])}
-                key={key}
-              >
-                <BlackPiece
-                  className={getClassName(["blackPiece"])}
-                  onClick={
-                    isCanPlay && playerPieceColor === "w"
-                      ? selectPiece(position)
-                      : undefined
-                  }
-                />
-              </Tile>
-            );
-          }
-
-          if (column === "w") {
-            return (
-              <Tile
-                className={getClassName(["tile", isSelect ? "select" : ""])}
-                key={key}
-              >
-                <WhitePiece
-                  className={getClassName(["whitePiece"])}
+            const key = `${column}-${rowIndex}-${columnIndex}`;
+            if (column === "b") {
+              return (
+                <Tile
+                  className={getClassName(["tile", isSelect ? "select" : ""])}
                   key={key}
-                  onClick={
-                    isCanPlay && playerPieceColor === "b"
-                      ? selectPiece(position)
-                      : undefined
-                  }
-                />
-              </Tile>
+                >
+                  <BlackPiece
+                    className={getClassName(["blackPiece"])}
+                    onClick={
+                      isCanPlay &&
+                      playerPieceColor === "w" &&
+                      !isMovedOpponentPiece
+                        ? selectPiece(position)
+                        : undefined
+                    }
+                  />
+                </Tile>
+              );
+            }
+
+            if (column === "w") {
+              return (
+                <Tile
+                  className={getClassName(["tile", isSelect ? "select" : ""])}
+                  key={key}
+                >
+                  <WhitePiece
+                    className={getClassName(["whitePiece"])}
+                    key={key}
+                    onClick={
+                      isCanPlay &&
+                      playerPieceColor === "b" &&
+                      !isMovedOpponentPiece
+                        ? selectPiece(position)
+                        : undefined
+                    }
+                  />
+                </Tile>
+              );
+            }
+
+            const isAroundTile = aroundPositions.some((aroundPosition) =>
+              isEqual(aroundPosition, position),
             );
-          }
 
-          const isAroundTile = aroundPositions.some((aroundPosition) =>
-            isEqual(aroundPosition, position),
-          );
-
-          return (
-            <Tile
-              className={getClassName(["tile", isAroundTile ? "around" : ""])}
-              key={key}
-              onClick={isCanPlay ? setPiece(position) : undefined}
-            />
-          );
-        });
-      })}
-    </div>
+            return (
+              <Tile
+                className={getClassName(["tile", isAroundTile ? "around" : ""])}
+                key={key}
+                onClick={isCanPlay ? setPiece(position) : undefined}
+              />
+            );
+          });
+        })}
+      </div>
+      {isMovedOpponentPiece
+        ? "請放棋子到棋盤任一空格"
+        : "請移動對手棋子或放棋子到棋盤任一空格"}
+    </>
   );
 };
 

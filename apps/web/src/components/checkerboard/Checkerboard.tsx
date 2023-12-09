@@ -55,11 +55,19 @@ function Checkerboard(): JSX.Element {
     ],
   );
 
-  const playerPieceColor: Exclude<Tile, ""> | null = useMemo(() => {
+  const { playerPieceColor, opponentPlayerPieceColor } = useMemo<
+    Record<string, Exclude<Tile, ""> | null>
+  >(() => {
     if (!connectStore || !connectStore.room?.player1) {
-      return null;
+      return { playerPieceColor: null, opponentPlayerPieceColor: null };
     }
-    return connectStore.player.id === connectStore.room.player1.id ? "b" : "w";
+    const isPlayerBlack =
+      connectStore.player.id === connectStore.room.player1.id;
+
+    return {
+      playerPieceColor: isPlayerBlack ? "b" : "w",
+      opponentPlayerPieceColor: isPlayerBlack ? "w" : "b",
+    };
   }, [connectStore]);
 
   const opponentPlayer: Player | null = useMemo(() => {
@@ -105,7 +113,11 @@ function Checkerboard(): JSX.Element {
         </div> */}
       </div>
 
-      <Board isCanPlay={isCanPlay} playerPieceColor={playerPieceColor} />
+      <Board
+        isCanPlay={isCanPlay}
+        opponentPlayerPieceColor={opponentPlayerPieceColor}
+        playerPieceColor={playerPieceColor}
+      />
 
       <div>
         <h2 id="you">
