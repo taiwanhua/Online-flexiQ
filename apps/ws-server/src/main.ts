@@ -19,6 +19,7 @@ import { joinRoom } from "./connections/message/joinRoom.js";
 import { restartGame } from "./connections/message/restartGame.js";
 import { startGame } from "./connections/message/startGame.js";
 import { nextMove } from "./connections/message/nextMove.js";
+import { rotateMove } from "./connections/message/rotateMove.js";
 const port = 8888; //should be in .env
 const rooms: Room[] = [];
 const players: Player[] = [];
@@ -215,6 +216,29 @@ wss.on("connection", function connection(webSocket, req) {
 
         ws.send(JSON.stringify(responseData));
         break;
+        break;
+      }
+      case "rotateMove": {
+        const { responseData, opponentPlayer } = rotateMove({
+          wss,
+          ws,
+          rooms,
+          players,
+          clientMessage,
+        });
+
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: {
+            to: "OpponentPlayer",
+            OpponentPlayerID: opponentPlayer?.id ?? "",
+          },
+        });
+
+        ws.send(JSON.stringify(responseData));
         break;
       }
       case "nextMove": {

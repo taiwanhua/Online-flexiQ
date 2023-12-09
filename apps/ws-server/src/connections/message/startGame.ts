@@ -47,6 +47,7 @@ export const startGame = ({
       ...cur,
       current,
       lastPlayer: isPlayer1Start ? cur.player2 : cur.player1,
+      winner: null,
     });
 
     return acc;

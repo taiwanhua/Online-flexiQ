@@ -46,7 +46,10 @@ export const restartGame = ({
     acc.push({
       ...cur,
       current,
+      player1: isPlayer1Restart ? cur.player2 : cur.player1,
+      player2: isPlayer1Restart ? cur.player1 : cur.player2,
       lastPlayer: isPlayer1Restart ? cur.player1 : cur.player2,
+      winner: null,
     });
 
     return acc;

@@ -10,7 +10,7 @@ function Lobby() {
 
   const navigate = useNavigate();
 
-  const createRoom = useCallback(async () => {
+  const createRoom = useCallback(() => {
     if (!connectStore) {
       return;
     }

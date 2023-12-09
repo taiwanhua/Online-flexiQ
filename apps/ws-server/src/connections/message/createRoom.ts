@@ -40,7 +40,7 @@ export const createRoom = ({
     player1: player,
     player2: null,
     current,
-    lastPlayer: player,
+    lastPlayer: null,
     winner: null,
   };
 

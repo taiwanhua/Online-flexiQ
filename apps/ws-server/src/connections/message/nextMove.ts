@@ -44,7 +44,7 @@ export const nextMove = ({
     acc.push({
       ...cur,
       current,
-      lastPlayer: player,
+      // lastPlayer: player, // next move is not change player, because no rotate move yet
     });
 
     return acc;

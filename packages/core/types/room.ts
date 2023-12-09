@@ -5,7 +5,16 @@ export interface Player {
   roomName: string | null;
 }
 
-export type Row = [string, string, string, string];
+export type Winner = [Player] | [Player, Player] | null;
+
+export type Tile = "" | "b" | "w";
+
+export interface Position {
+  rowIndex: number;
+  columnIndex: number;
+}
+
+export type Row = [Tile, Tile, Tile, Tile];
 
 export type Board = [Row, Row, Row, Row];
 
@@ -17,7 +26,7 @@ export interface Room {
   // history: []; // if need regret chess
   current: Board;
   lastPlayer: Player | null;
-  winner: Player | null;
+  winner: Winner;
 }
 
 export interface RoomsWithConnectPlayerRoom {
@@ -32,6 +41,7 @@ export type ClientMessageType =
   | "leaveRoom"
   | "startGame"
   | "restartGame"
+  | "rotateMove"
   | "nextMove";
 
 export interface JoinRoomClientMessage {
@@ -79,6 +89,15 @@ export interface RestartGameClientMessage {
   current: Board;
 }
 
+export interface RotateMoveClientMessage {
+  type: "rotateMove";
+  roomId: string;
+  roomName: string;
+  playerId: string;
+  playerName: string;
+  current: Board;
+}
+
 export interface NextMoveClientMessage {
   type: "nextMove";
   roomId: string;
@@ -94,6 +113,7 @@ export type ClientMessage =
   | LeaveRoomClientMessage
   | StartGameClientMessage
   | RestartGameClientMessage
+  | RotateMoveClientMessage
   | NextMoveClientMessage;
 
 export interface QueryOfWS {

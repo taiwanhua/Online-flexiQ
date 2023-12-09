@@ -41,6 +41,7 @@ export const leaveRoom = ({
         ...cur,
         // current, // if need reset board
         ...(isPlayer1 ? { player1: null } : { player2: null }),
+        lastPlayer: null,
       });
     }
 

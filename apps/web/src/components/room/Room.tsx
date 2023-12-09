@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ClientMessage } from "@repo/core/room";
+import { LeaveRoomClientMessage } from "@repo/core/room";
 import { board } from "@/constant/board";
 import { useCallback } from "react";
 import { useConnectStore } from "@/zustand/useConnectStore";
@@ -15,7 +15,7 @@ function Room() {
       return;
     }
 
-    sendJsonMessage<ClientMessage>({
+    sendJsonMessage<LeaveRoomClientMessage>({
       type: "leaveRoom",
       roomId: connectStore.player?.roomId ?? "",
       roomName: connectStore.player?.roomName ?? "",
