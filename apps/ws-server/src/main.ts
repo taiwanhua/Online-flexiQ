@@ -20,7 +20,10 @@ import { restartGame } from "./connections/message/restartGame.js";
 import { startGame } from "./connections/message/startGame.js";
 import { nextMove } from "./connections/message/nextMove.js";
 import { rotateMove } from "./connections/message/rotateMove.js";
-const port = 8888; //should be in .env
+import "dotenv/config";
+// console.log(process.env);
+
+const port = process.env.PORT; //should be in .env
 const rooms: Room[] = [];
 const players: Player[] = [];
 

@@ -13,6 +13,7 @@
   "dependencies": {
     "@repo/core": "*",
     "@repo/ui": "*",
+    "dotenv": "16.3.1",
     "ts-node": "10.9.1",
     "uuid": "9.0.1",
     "ws": "8.14.2"
@@ -20,8 +21,8 @@
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
-    "@types/ws": "8.5.10",
     "@types/uuid": "9.0.7",
+    "@types/ws": "8.5.10",
     "eslint": "^8.54.0",
     "typescript": "^5.3.2"
   }
