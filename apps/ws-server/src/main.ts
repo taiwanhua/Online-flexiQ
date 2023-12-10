@@ -24,8 +24,6 @@ const port = 8888; //should be in .env
 const rooms: Room[] = [];
 const players: Player[] = [];
 
-// TODO : need send message to other player, need send new rooms info to not start game player
-
 const server = createServer({
   // cert: readFileSync("/path/to/cert.pem"),
   // key: readFileSync("/path/to/key.pem"),

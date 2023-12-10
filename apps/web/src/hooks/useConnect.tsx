@@ -41,9 +41,9 @@ export function useConnect({ url: urlParam }: Param): Return {
     if (urlParam) {
       return urlParam;
     }
-    console.log(connectStore?.player);
+
     return queryString.stringifyUrl({
-      url: "ws://localhost:8888",
+      url: import.meta.env.VITE_WS_SERVER_URL,
       query: connectStore
         ? { ...connectStore.player }
         : { ...playerInfoSession },
