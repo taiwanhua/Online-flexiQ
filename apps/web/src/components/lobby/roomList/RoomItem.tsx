@@ -36,17 +36,16 @@ export const RoomItem: FC<RoomItemProps> = ({ roomId, roomName, isFull }) => {
   }, [connectStore, navigate, roomId, roomName, sendJsonMessage]);
 
   return (
-    <li className="room">
-      <button
-        className="room_btn"
-        disabled={isFull}
-        onClick={isFull ? undefined : connectRoom}
-        type="button"
-      >
+    <button
+      disabled={isFull}
+      onClick={isFull ? undefined : connectRoom}
+      className="room"
+    >
+      <li className="flex justify-between">
         {roomName}
         {isFull ? " (Room is full)" : null}
-      </button>
-    </li>
+      </li>
+    </button>
   );
 };
 

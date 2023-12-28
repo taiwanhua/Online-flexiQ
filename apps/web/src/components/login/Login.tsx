@@ -26,14 +26,16 @@ function Login() {
   }, [connectStore, name, navigate, setConnectStore]);
 
   return (
-    <div>
-      輸入暱稱
+    <div className="login_box">
+      <p className="login_title">請輸入暱稱:</p>
       <input
+        className="login_input"
         onChange={(e) => setName(e.target.value)}
+        placeholder="暱稱"
         type="text"
         value={name}
       />
-      <button onClick={logIn} type="button">
+      <button className="inline-block btn" onClick={logIn} type="button">
         進入遊戲
       </button>
     </div>

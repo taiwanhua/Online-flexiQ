@@ -31,11 +31,11 @@ function Room() {
 
   return (
     <div>
-      <button onClick={leaveRoom} type="button">
+      <button onClick={leaveRoom} type="button" className="backLobbyBtn">
         回大廳
       </button>
-      {JSON.stringify(connectStore?.room?.player1)}
-      {JSON.stringify(connectStore?.room?.player2)}
+      {/* {JSON.stringify(connectStore?.room?.player1)}
+      {JSON.stringify(connectStore?.room?.player2)} */}
 
       <Checkerboard />
     </div>

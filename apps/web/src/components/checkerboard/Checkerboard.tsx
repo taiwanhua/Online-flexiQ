@@ -84,12 +84,24 @@ function Checkerboard(): JSX.Element {
   }
 
   return (
-    <div className="checker_board">
-      <h1>黑白轉轉棋</h1>
+    <div>
+      <h1 className="room_title">黑白轉轉棋</h1>
       <hr />
       <h2 id="winner">
         輪到： <span id="player">{isCanPlay ? "你" : "對手"}</span>
       </h2>
+      <div className="vsDiv">
+        <h2 id="you">
+          {playerPieceColor === "b" ? "黑棋" : "白棋"} :
+          {connectStore?.player?.name ?? "尚未加入"}
+        </h2>
+
+        <h2>VS</h2>
+        <h2 id="opponent">
+          {playerPieceColor === "b" ? "白棋" : "黑棋"} :
+          {opponentPlayer?.name ?? "尚未加入"}
+        </h2>
+      </div>
       <div style={{ display: "flex", justifyContent: "center" }}>
         {connectStore?.room?.winner ? (
           <button
@@ -119,20 +131,7 @@ function Checkerboard(): JSX.Element {
         playerPieceColor={playerPieceColor}
       />
 
-      <div>
-        <h2 id="you">
-          Player 1(你 {playerPieceColor === "b" ? "黑棋" : "白棋"}) :
-          {connectStore?.player?.name ?? "尚未加入"}
-        </h2>
-
-        <h2>VS</h2>
-        <h2 id="opponent">
-          Player 2(對手 {playerPieceColor === "b" ? "白棋" : "黑棋"}) :
-          {opponentPlayer?.name ?? "尚未加入"}
-        </h2>
-
-        <Rule />
-      </div>
+      <Rule />
     </div>
   );
 }
