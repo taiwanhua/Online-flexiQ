@@ -21,6 +21,7 @@ import { startGame } from "./connections/message/startGame.js";
 import { nextMove } from "./connections/message/nextMove.js";
 import { rotateMove } from "./connections/message/rotateMove.js";
 import "dotenv/config";
+import { closeTab } from "./connections/close/closeTab.js";
 // console.log(process.env);
 
 const port = process.env.PORT; //should be in .env
@@ -273,12 +274,40 @@ wss.on("connection", function connection(webSocket, req) {
       }
     }
   });
+
+  ws.on("close", function close(code: number) {
+    if (code === 1001) {
+      const { opponentPlayer } = closeTab({ ws, rooms, players });
+
+      if (opponentPlayer) {
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: {
+            to: "InLobbyAndOpponentPlayer",
+            OpponentPlayerID: opponentPlayer?.id ?? "",
+          },
+        });
+      } else {
+        broadcastToOtherClient({
+          wss,
+          broadcastWs: ws,
+          rooms,
+          players,
+          broadcast: { to: "InLobby" },
+        });
+      }
+    }
+  });
 });
 
 // to detect and close broken connections
-const interval = pingInterval(wss);
+const interval = pingInterval(wss, rooms, players);
 
 wss.on("close", function close() {
+  console.log("close asasvc");
   clearInterval(interval);
 });
 

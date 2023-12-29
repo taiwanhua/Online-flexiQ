@@ -43,6 +43,10 @@ function Lobby() {
     }
   }, [connectStore, navigate, sendJsonMessage, roomName]);
 
+  const closeDialog = useCallback(() => {
+    setShowDialog(false);
+  }, []);
+
   return (
     <>
       <h2 className="lobby_title">遊戲大廳</h2>
@@ -59,9 +63,26 @@ function Lobby() {
 
         <RoomList roomList={connectStore?.rooms ?? []} />
 
-        {!!showDialog && (
-          <div id="mask" className="mask" onClick={() => setShowDialog(false)}>
-            <div className="roomName_box" onClick={(e) => e.stopPropagation()}>
+        {showDialog ? (
+          <div
+            className="mask"
+            id="mask"
+            onClick={closeDialog}
+            onKeyUp={closeDialog}
+            role="button"
+            tabIndex={-1}
+          >
+            <div
+              className="roomName_box"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              onKeyUp={(e) => {
+                e.stopPropagation();
+              }}
+              role="button"
+              tabIndex={-1}
+            >
               <p className="roomName_title">請輸入房間名稱:</p>
               <input
                 className="roomName_input"
@@ -79,7 +100,7 @@ function Lobby() {
               </button>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </>
   );
