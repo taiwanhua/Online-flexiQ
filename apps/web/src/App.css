@@ -79,10 +79,12 @@ hr {
   width: 500px;
   margin: auto;
   padding: 50px 0;
+  text-align: left;
 }
 
 .rule p {
   font-size: 18px;
+  margin: 16px 0;
 }
 
 /* media queries (small devices) */
@@ -256,10 +258,50 @@ hr {
   .lobby_container {
     width: 500px;
   }
+  .accordion {
+    width: 500px;
+  }
   hr {
     width: 500px;
   }
   .vsDiv {
     flex-direction: row;
   }
+}
+
+/* Style the buttons that are used to open and close the accordion panel */
+.accordion {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  margin-top: 18px;
+  padding: 18px;
+  width: 300px;
+  text-align: center;
+  border: none;
+  outline: none;
+  transition: 0.4s;
+}
+
+.accordion:hover {
+  background-color: #ccc;
+}
+
+/* Style the accordion panel. Note: hidden by default */
+.panel {
+  padding: 0 18px;
+  background-color: white;
+  display: block;
+  overflow: hidden;
+  max-height: 800px;
+  transition: max-height 0.2s ease-out;
+}
+
+.panel_close {
+  padding: 0 18px;
+  background-color: white;
+  display: block;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.2s ease-out;
 }
